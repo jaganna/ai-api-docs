@@ -1,5 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
@@ -29,6 +30,9 @@ repositories {
     }
 }
 
+val platformType = providers.gradleProperty("platformType")
+val platformVersion = providers.gradleProperty("platformVersion")
+
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
     testImplementation(libs.junit)
@@ -36,7 +40,21 @@ dependencies {
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
-        create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+//        create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+        val isSnapshot = platformVersion.get().endsWith("-SNAPSHOT")
+        create(
+            // Specify both `platformType` and `platformVersion` to correctly "distinguish between IntelliJ IDEA and
+            // IntelliJ IDEA Ultimate when parsing IU code". This can likely be removed after all plugins updated to
+            // 2025.3.* RELEASE. See below commit & method impl for details:
+            // - https://github.com/JetBrains/intellij-platform-gradle-plugin/commit/79f8625f6411ca9cacb3b7db32cbcde7a159e1ad
+            // - https://github.com/JetBrains/intellij-platform-gradle-plugin/blob/4abe312ff252b9f013451d82844ef4cc9dcc0807/src/main/kotlin/org/jetbrains/intellij/platform/gradle/IntelliJPlatformType.kt#L151-L197
+            type = IntelliJPlatformType.fromCode(platformType.get(), platformVersion.get()),
+            version = platformVersion,
+        ) {
+            // `useInstaller` needs to be set to 'false' (aka, `isSnapshot` = 'true') to resolve EAP releases.
+            useInstaller = !isSnapshot
+            useCache = true
+        }
 
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
@@ -104,6 +122,12 @@ intellijPlatform {
 
     pluginVerification {
         ides {
+            create(
+                type = IntelliJPlatformType.fromCode(platformType.get(), platformVersion.get()),
+                version = platformVersion,
+            ) {
+                useCache = true
+            }
             recommended()
         }
     }
