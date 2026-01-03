@@ -10,6 +10,17 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.jaganna.aiapidocs.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.jaganna.aiapidocs.startup.MyProjectActivity" />
+        <postStartupActivity implementation="com.github.jaganna.aiapidocs.startup.MyProjectActivity"/>
     </extensions>
+
+    <actions>
+        <action id="com.github.jaganna.aiapidocs.actions.GenerateApiDocAction"
+                class="com.github.jaganna.aiapidocs.actions.GenerateApiDocAction"
+                text="Generate LLM API Doc"
+                description="Generate an API doc from this library"
+                icon="AllIcons.Actions.Preview">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+
 </idea-plugin>
