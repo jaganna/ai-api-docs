@@ -3,3 +3,5 @@ plugins {
 }
 
 rootProject.name = "ai-api-docs"
+
+include(":lib") // Include a library module used by the plugin
